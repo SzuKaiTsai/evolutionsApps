@@ -1,0 +1,121 @@
+Les commandes pour créer un projet
+
+Installer Node.js --> https://nodejs.org/
+
+node -v
+Si fonctionne pas, faire --> 
+nvm install 22.18.0
+nvm use 22.18.0
+node -v
+
+
+npm -v
+
+
+    npm init pour créer package.json
+    npm install electron
+    npm update
+    npm start
+    npm run <script>
+
+
+typescript
+
+tsc --version
+npm install -g typescript
+
+GitBash
+https://git-scm.com/install/windows
+
+
+--watch pour eletron-vite -> s'actualise automatiquement
+
+***************************************************************************
+Étapes : 
+    npm init -y
+        "main": "dist/main/main.js"
+        "scripts": {
+            "dev": "electron-vite dev --watch",
+            "build": "electron-vite build",
+            "preview": "electron-vite preview",
+            "test": "echo \"Error: no test specified\" && exit 1"
+        }
+
+    npm install --save-dev electron electron-vite vite typescript @types/node vue @vitejs/plugin-vue
+    créer tsconfig.json à la racine et inclure ceci : 
+
+        {
+            "compilerOptions": {
+                "target": "ESNext",
+                "module": "ESNext",
+                "moduleResolution": "Node",
+                "strict": true,
+                "esModuleInterop": true,
+                "skipLibCheck": true,
+                "outDir": "./dist",
+                "baseUrl": ".",
+                "paths": { "@/*": ["./src/*"] }
+            },
+            "include": ["src/**/*.ts", "src/**/*.vue"]
+        }
+
+
+    rouler ces commandes :
+     
+    # Structure de base dans le dossier Exemple01
+    mkdir -p src/{main,preload,renderer}
+    touch electron.vite.config.ts 
+    #Structure des dossiers main et preload
+    touch src/main/main.ts src/preload/preload.ts 
+    # Structure du dossier src/renderer 
+    touch src/renderer/main.ts src/renderer/index.html src/renderer/router.ts src/renderer/App.vue 
+    touch src/global.d.ts 
+    # Fichier de déclaration de modules de Vue 
+    touch src/shims-vue.d.ts 
+    # Structure du dossier src/renderer/components 
+    mkdir src/renderer/components 
+    # Structure du dossier src/renderer/styles 
+    mkdir src/renderer/styles 
+    touch src/renderer/styles/styles.css
+
+            
+    Dans le fichier electron.vite.config.ts : 
+
+import { defineConfig } from 'electron-vite';
+import vue from '@vitejs/plugin-vue';
+
+export default defineConfig({
+    main: {
+        build: {
+            outDir: './dist/main',
+        },
+        plugins: [],
+    },
+    preload: {
+        build: {
+            outDir: './dist/preload',
+        },
+        plugins: [],
+    },
+    renderer: {
+        build: {
+            outDir: './dist/renderer',
+            rollupOptions: {
+                input: './src/renderer/index.html', //Fichier d'entrée de l'application
+            },
+        },
+        plugins: [vue()],
+    },
+});
+
+ajouter la "base" dans src/renderer/index.html
+
+App.vue
+    <template>
+        <div id="app">
+            <h1>Application Electrion avec Vue.js</h1>
+        </div>
+    </template>
+
+
+

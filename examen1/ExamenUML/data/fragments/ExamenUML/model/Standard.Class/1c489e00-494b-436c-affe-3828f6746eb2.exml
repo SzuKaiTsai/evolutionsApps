@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<!--GENERATED FILE, PLEASE DO NOT EDIT!!!--><EXT object="Compte" version="4">
+  <OBJECT>
+    <ID name="Compte" mc="Standard.Class" uid="1c489e00-494b-436c-affe-3828f6746eb2"/>
+    <PID name="examenuml" mc="Standard.Package" uid="6073769c-0627-49d5-9e63-2b3dfb8b16c1"/>
+    <ATTRIBUTES>
+      <ATT name="IsActive">false</ATT>
+      <ATT name="IsMain">false</ATT>
+      <ATT name="IsElementary">false</ATT>
+      <ATT name="IsAbstract">false</ATT>
+      <ATT name="IsLeaf">false</ATT>
+      <ATT name="IsRoot">false</ATT>
+      <ATT name="Visibility">Public</ATT>
+      <ATT name="Name"><![CDATA[Compte]]></ATT>
+      <ATT name="status">1970354901745664</ATT>
+    </ATTRIBUTES>
+    <DEPENDENCIES>
+      <COMP relation="OwnedEnd">
+        <REFOBJ>
+          <ID name="fait_parti_de" mc="Standard.AssociationEnd" uid="fdbdeb30-0b3d-4279-aaa3-3a876cb0fc6d"/>
+        </REFOBJ>
+      </COMP>
+    </DEPENDENCIES>
+  </OBJECT>
+</EXT>

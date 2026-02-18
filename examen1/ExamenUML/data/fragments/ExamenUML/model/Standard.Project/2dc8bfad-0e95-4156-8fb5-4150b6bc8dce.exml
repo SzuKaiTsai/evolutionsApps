@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<!--GENERATED FILE, PLEASE DO NOT EDIT!!!--><EXT object="ExamenUML" version="4">
+  <OBJECT>
+    <ID name="ExamenUML" mc="Standard.Project" uid="2dc8bfad-0e95-4156-8fb5-4150b6bc8dce"/>
+    <ATTRIBUTES>
+      <ATT name="ProjectContext"></ATT>
+      <ATT name="ProjectDescr"></ATT>
+      <ATT name="Name"><![CDATA[ExamenUML]]></ATT>
+      <ATT name="status">1970354901745664</ATT>
+    </ATTRIBUTES>
+    <DEPENDENCIES>
+      <COMP relation="Model">
+        <COMPID name="examenuml" mc="Standard.Package" uid="6073769c-0627-49d5-9e63-2b3dfb8b16c1"/>
+      </COMP>
+      <COMP relation="DiagramRoot">
+        <COMPID name="ExamenUML" mc="Infrastructure.DiagramSet" uid="c22f391e-c349-4394-aa15-e79b585a3046"/>
+      </COMP>
+    </DEPENDENCIES>
+  </OBJECT>
+</EXT>
