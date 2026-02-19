@@ -5,7 +5,7 @@
       <div class="table-grid">
         <!-- Nom -->
         <label for="nom">Nom :</label>
-        <input id="nom" v-model="nom" type="text"/>
+        <input id="nom" v-model="nom" type="text" ref="nomInput"/>
        
         <!-- Prénom -->
         <label for="prenom">Prénom :</label>
@@ -122,7 +122,34 @@
         langagesChoisis: [], // Liste des langages choisis
       };
     },
+
+    // b- au chargement de la fenetre, le curseur est place dans le champ nom
+    mounted(){
+
+        // envoie d'un message au processus principal
+        window.api.send("focus-nom");
+
+        // appliquer le focus une fois le signal du main process reçu
+        window.api.on("apply-focus", () => {
+            this.focusNom();
+        });
+    },
+
+
     methods: {
+
+       // b- place le curseur dans le champ nom
+       focusNom(){
+        const inputElement = this.$refs.nomInput as HTMLInputElement;
+
+        if(inputElement)
+       {
+           inputElement.focus();
+       } else {
+            console.error("Référence à nomInput non trouvée");
+       }
+
+       }, 
       copierLangages() {
         // Copier les valeurs sélectionnées de listeLangages et de les assigner à langagesChoisis
         this.langagesChoisis = [...this.listeLangages];

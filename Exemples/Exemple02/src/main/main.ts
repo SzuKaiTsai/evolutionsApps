@@ -32,7 +32,7 @@ ipcMain.on('message-channel',(event, arg) => {
 ipcMain.on('open-form-window', ()=>{
     const formWindow = new BrowserWindow({
         width:450,
-        height:150,
+        height:600,
         backgroundColor: '#d5cdcb',
         webPreferences: {
             preload: path.join(__dirname, '../preload/preload.js'),
@@ -65,4 +65,9 @@ ipcMain.on('show-dialog',(event, formDataString) => {
         detail: message,
         buttons: ['OK'],
     })
+});
+
+// b-
+ipcMain.on("focus-nom",(event) => {
+    event.sender.send("apply-focus");
 });

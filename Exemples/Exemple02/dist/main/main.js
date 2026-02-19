@@ -40,7 +40,7 @@ electron.ipcMain.on("message-channel", (event, arg) => {
 electron.ipcMain.on("open-form-window", () => {
   const formWindow = new electron.BrowserWindow({
     width: 450,
-    height: 150,
+    height: 600,
     backgroundColor: "#d5cdcb",
     webPreferences: {
       preload: path__namespace.join(__dirname, "../preload/preload.js"),
@@ -76,4 +76,7 @@ electron.ipcMain.on("show-dialog", (event, formDataString) => {
     detail: message,
     buttons: ["OK"]
   });
+});
+electron.ipcMain.on("focus-nom", (event) => {
+  event.sender.send("apply-focus");
 });
