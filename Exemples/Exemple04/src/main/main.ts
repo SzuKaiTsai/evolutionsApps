@@ -1,0 +1,136 @@
+import {app, BrowserWindow, ipcMain, dialog} from 'electron';
+import * as path from 'path';
+
+let mainWindow: BrowserWindow | null = null;
+
+
+function createWindow() {
+    mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        autoHideMenuBar: true, // masquer la barre de menu par default de la fenetre electron 
+        webPreferences: {
+            preload: path.join(__dirname, '../preload/preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+        }
+    })
+
+    mainWindow.loadURL('http://localhost:5173'); // URL de l'application Vue.js
+}
+
+app.whenReady().then(createWindow);
+
+
+ipcMain.on('open-form-window', () => {
+    const formWindow = new BrowserWindow({
+        width: 450,
+        height: 650,
+        backgroundColor: '#d5cdcb',
+        webPreferences: {
+            preload: path.join(__dirname, '../preload/preload.js'),
+            contextIsolation: true, // Sécurise l'application en isolant le contexte de rendu
+        },
+    });
+
+    //Charger la route du formulaire Form.vue
+    formWindow.loadURL('http://localhost:5173/#/form'); // URL de l'application Vue.js pour le formulaire
+});
+
+// Communication entre le processus principal et le processus de rendu
+ipcMain.on('message-channel', (event, arg)=> {
+    console.log('Message reçu :', arg);
+    event.reply('message-channel', 'Réponse du main process');
+});
+
+// ipcMain.on pour écouter les messages du renderer process
+ipcMain.on('show-dialog', (event, formDataString) => {
+
+    const formData = JSON.parse(formDataString); // Convertit la chaîne JSON en objet JavaScript
+
+    const message = `
+    Nom: ${formData.nom}\n
+    Prénom: ${formData.prenom}\n
+    Date de naissance: ${formData.dateNaissance}\n
+    Email: ${formData.email}\n
+    Région: ${formData.region}\n
+    Statut professionnel : ${formData.statutProfessionnel.join(", ")}\n
+    État matrimonial : ${formData.etatMatrimonial}\n
+    Langages choisis : ${formData.langagesChoisis.join(", ")}
+    `; // Crée un message formaté
+
+    dialog.showMessageBox({
+        type: 'info',
+        title: "Formulaire validée",
+        message: "Données du formulaire: ",
+        detail: message, // Affichage du message dans “detail” du MessageBox
+        buttons: ['OK'],
+    });
+});
+
+// Événement au chargement du formulaire pour placer le focus dans le champ "nom"
+ipcMain.on('focus-nom', (event) => {
+    // Envoie un message au processus de rendu pour appliquer le focus
+    event.sender.send("apply-focus"); 
+});
+
+// c- Au chargement de la fenêtre, le curseur doit être dans la zone de nom
+ipcMain.on('show-error-dialog', (event) => {
+    dialog.showMessageBox({
+        type: 'error',
+        title: 'Erreur',
+        message: 'Le champ nom est obligatoire',
+        buttons: ['OK'],
+    })
+});
+
+// fonction qui permet d'ouvrir la fenetre "accueil" sur evenement openAccueil
+ipcMain.on('open-accueil', (event)=> {
+    const accueilWindow = new BrowserWindow({
+        width: 550,
+        height: 500,
+        title: "Accueil",
+        modal: true, // bloque l'acces aux autres fenetres de l'app
+        parent: mainWindow || undefined, // pour une fenetre modale, specifier la fenetre parent
+        show: false,
+        autoHideMenuBar: true, // masquer la barre de menu par default de la fenetre electron 
+        webPreferences:{
+            preload: path.join(__dirname, '../preload/preload.js'),
+            contextIsolation: true, 
+        }
+    })
+
+    // Attendre le chargement complet de la fenetre avant de l'afficher
+    accueilWindow?.webContents.on('did-finish-load', () => {
+        accueilWindow.show()
+    })
+
+    // Chargement de la route Vue dans la nouvelle fenetre
+    accueilWindow.loadURL('http://localhost:5173/#/accueil')
+})
+
+
+// fonction qui permet d'ouvrir la fenetre "todo" sur evenement open-Todo
+ipcMain.on('open-todo', (event)=> {
+    const todoWindow = new BrowserWindow({
+        width: 550,
+        height: 500,
+        title: "Todo Example",
+        modal: true, // bloque l'acces aux autres fenetres de l'app
+        parent: mainWindow || undefined, // pour une fenetre modale, specifier la fenetre parent
+        show: false,
+        autoHideMenuBar: true, // masquer la barre de menu par default de la fenetre electron 
+        webPreferences:{
+            preload: path.join(__dirname, '../preload/preload.js'),
+            contextIsolation: true, 
+        }
+    })
+
+    // Attendre le chargement complet de la fenetre avant de l'afficher
+    todoWindow?.webContents.on('did-finish-load', () => {
+        todoWindow.show()
+    })
+
+    // Chargement de la route Vue dans la nouvelle fenetre
+    todoWindow.loadURL('http://localhost:5173/#/todo')
+})

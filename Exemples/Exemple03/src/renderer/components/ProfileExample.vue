@@ -19,8 +19,10 @@
             <v-combobox v-model="interets" :items="optionsInterets" label="centre d'interets" multiple chips clearable>
                 
             </v-combobox>
-          <p> Degré de satisfaction</p>
-          <v-btn color="primary">
+          <v-slider v-model="satisfaction" :max="10" label="Satisfaction" thumb-label step="1">
+
+          </v-slider>
+          <v-btn color="primary" @click="enregistrePreferences">
             Enregistrer les préférences
           </v-btn>
         </v-expansion-panel-text>
@@ -37,6 +39,8 @@
 
     </v-expansion-panels>
   </v-container>
+
+  <v-snackbar v-model="snackbar" color="success" location="bottom" :timeout="2000"> Préférences enregistrées avec succès !</v-snackbar>
 </template>
 
 <script setup lang="ts">
@@ -53,5 +57,11 @@ const optionsInterets = [
   'Voyage',
   'Technologie'
 ]
+const satisfaction = ref(5)
+const snackbar = ref(false)
+
+function enregistrePreferences(){
+  snackbar.value = true
+}
 
 </script>
