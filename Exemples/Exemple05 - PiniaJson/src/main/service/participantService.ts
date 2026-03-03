@@ -38,4 +38,16 @@ export class ParticipantService {
         });
     }
 
+    // Méthode pour ajouter un nouveau participant
+    public async ajouterParticipant(participant: Participant): Promise<void> {
+        const participants = await this.lireParticipants();
+
+        participants.push(participant);
+        await this.ecrireParticipants(participants);
+    }
+
+    private async ecrireParticipants(participants: Participant[]): Promise<void> {
+        const data = JSON.stringify(participants, null, 2);
+        await fs.writeFile(this.participantsFilePath, data, 'utf-8');
+    }
 }

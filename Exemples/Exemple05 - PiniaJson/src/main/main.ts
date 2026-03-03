@@ -1,6 +1,7 @@
-import {app, BrowserWindow, ipcMain} from 'electron';
+import {app, BrowserWindow, dialog, ipcMain} from 'electron';
 import path from 'path';
 import { ParticipantService } from './service/participantService';
+import { Participant } from '../common/participant';
 
 // Déclaration de la fenêtre principale
 // nul indique que la fenêtre n'est pas encore créée
@@ -75,4 +76,20 @@ ipcMain.handle('Canal-ChargerParticipants', async () => {
     } catch (error: any) {
       return { success: false, error: error.message };
     }
+});
+
+ipcMain.handle('Canal-AjouterParticipant', async (_event, participant: Participant) => {
+    try {
+        await participantService.ajouterParticipant(participant);
+        if (mainWindow) {
+            mainWindow.webContents.send('participant-added', participant);
+          }
+          return { success: true, data: participant };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('show-message-box', async (event, options) => {
+    return dialog.showMessageBox(options);
 });

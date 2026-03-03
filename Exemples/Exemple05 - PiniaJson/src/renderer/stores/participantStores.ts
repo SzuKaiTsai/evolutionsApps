@@ -48,10 +48,45 @@ export const useParticipantStore = defineStore('participant', () => {
         }
     }
 
-    function resetParticipants() {
+    // reset de l'etat du store, utile pour les operations CRUD
+    function resetState() {
         participants.value = []
         isLoading.value = false
         error.value = null
+    }
+
+
+    async function ajouterParticipant(participant: Participant) {
+        isLoading.value = true
+        error.value = null
+
+        try {
+            const plainParticipant = JSON.parse(JSON.stringify(participant)) // Convertir l'instance de Participant en objet simple
+            const result = await window.api.ajouterParticipant(plainParticipant)
+            if (result.success) {
+                // Si l'ajout est réussi, recharger les participants
+                return { success: true }
+            } else {
+                error.value = result.error || 'Erreur lors de l\'ajout du participant'
+                return { success: false, error: error.value }
+            }
+        } catch (e: any) {
+            error.value = e.message
+            return { success: false, error: e.message }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    // function pour ecouter les notifications IPC pour les changements (depuis d'autres fenetres)
+    function setupIpcListeners() {
+        window.api.on('participant-added', (event: any, participant : Participant) => {
+            const exists = participants.value.some(p => p.matricule === participant.matricule);
+            if (!exists) {
+                participants.value.push(participant);
+                console.log('Nouveau participant ajouté via IPC: ', participant);
+            }
+        });
     }
 
     return {
@@ -66,7 +101,9 @@ export const useParticipantStore = defineStore('participant', () => {
         totalParticipants,
         // Actions
         chargerParticipants,
-        resetParticipants
+        resetState,
+        ajouterParticipant,
+        setupIpcListeners
     }
 
 });

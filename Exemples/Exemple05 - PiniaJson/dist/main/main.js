@@ -59,6 +59,16 @@ class ParticipantService {
       return await this.chargerParticipants();
     });
   }
+  // Méthode pour ajouter un nouveau participant
+  async ajouterParticipant(participant) {
+    const participants = await this.lireParticipants();
+    participants.push(participant);
+    await this.ecrireParticipants(participants);
+  }
+  async ecrireParticipants(participants) {
+    const data = JSON.stringify(participants, null, 2);
+    await fs.promises.writeFile(this.participantsFilePath, data, "utf-8");
+  }
 }
 let mainWindow = null;
 electron.app.on("ready", () => {
@@ -113,4 +123,18 @@ electron.ipcMain.handle("Canal-ChargerParticipants", async () => {
   } catch (error) {
     return { success: false, error: error.message };
   }
+});
+electron.ipcMain.handle("Canal-AjouterParticipant", async (_event, participant) => {
+  try {
+    await participantService.ajouterParticipant(participant);
+    if (mainWindow) {
+      mainWindow.webContents.send("participant-added", participant);
+    }
+    return { success: true, data: participant };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+electron.ipcMain.handle("show-message-box", async (event, options) => {
+  return electron.dialog.showMessageBox(options);
 });
