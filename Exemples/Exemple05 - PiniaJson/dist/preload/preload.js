@@ -7,5 +7,6 @@ electron.contextBridge.exposeInMainWorld("api", {
   },
   chargerParticipants: () => electron.ipcRenderer.invoke("Canal-ChargerParticipants"),
   ajouterParticipant: (participant) => electron.ipcRenderer.invoke("Canal-AjouterParticipant", participant),
-  showMessageBox: (options) => electron.ipcRenderer.invoke("show-message-box", options)
+  showMessageBox: (options) => electron.ipcRenderer.invoke("showMessageBox", options),
+  supprimerParticipant: (matricule) => electron.ipcRenderer.invoke("Canal-SupprimerParticipant", matricule)
 });

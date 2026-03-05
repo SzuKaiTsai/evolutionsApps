@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import { createPinia } from 'pinia';
 import App from './App.vue';
+
 import { Participant } from "../common/participant";
 
 import router from './router';
@@ -21,8 +22,8 @@ const vuetify = createVuetify({
 });
 
 interface ApiResponse {
-    success: boolean;
-    error?: string;
+    success: boolean
+    error?: string
 }
 
 declare global {
@@ -36,12 +37,12 @@ declare global {
             // Second paramètre de la méthode on est la fonction listener: prend un événement et un nombre variable d'arguments
             on: (channel: string, listener: (event: any, ...args: any[]) => void) => void;
 
-            // Méthode chargerParticipants qui retourne une promesse d'ApiResponse
-            chargerParticipants: () => Promise<ApiResponse & { data?: Participant[] }>;
+            chargerParticipants: () => Promise<ApiResponse & { data: Participant[]}>;
 
-            ajouterParticipant: (participant: Participant) => Promise<ApiResponse>;
+            ajouterParticipant: (participant: Participant) => Promise<ApiResponse>
+            showMessageBox: (options: any) => Promise<any>
 
-            showMessageBox: (options: any) => Promise<any>;
+            supprimerParticipant: (matricule: number) => Promise<ApiResponse>
         };
     }
 }

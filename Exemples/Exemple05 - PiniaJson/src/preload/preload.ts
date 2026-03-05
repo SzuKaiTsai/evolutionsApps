@@ -1,9 +1,10 @@
-import { Participant } from "../common/participant";
 import { contextBridge, ipcRenderer } from "electron";
 
+import { Participant } from "../common/participant"
+
 interface ApiResponse {
-    success: boolean;
-    error?: string;
+    success: boolean
+    error?: string
 }
 
 contextBridge.exposeInMainWorld('api', {
@@ -11,8 +12,12 @@ contextBridge.exposeInMainWorld('api', {
     on: (channel:string, callback: (event: any, data: any) => void) => {
         ipcRenderer.on(channel, callback);
     },
-    chargerParticipants:() => ipcRenderer.invoke('Canal-ChargerParticipants'),
 
-    ajouterParticipant:(participant: Participant) : Promise<ApiResponse> => ipcRenderer.invoke('Canal-AjouterParticipant', participant),
-    showMessageBox: (options: any) => ipcRenderer.invoke('show-message-box', options),
+    chargerParticipants: () => ipcRenderer.invoke('Canal-ChargerParticipants'),
+
+    ajouterParticipant: (participant: Participant) : Promise<ApiResponse> => ipcRenderer.invoke('Canal-AjouterParticipant', participant),
+
+    showMessageBox: (options: any) => ipcRenderer.invoke("showMessageBox", options),
+
+    supprimerParticipant: (matricule: number): Promise<ApiResponse> => ipcRenderer.invoke('Canal-SupprimerParticipant', matricule),
 });

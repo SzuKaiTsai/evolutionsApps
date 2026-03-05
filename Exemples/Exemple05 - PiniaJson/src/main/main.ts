@@ -1,7 +1,7 @@
-import {app, BrowserWindow, dialog, ipcMain} from 'electron';
+import {app, BrowserWindow, ipcMain, dialog} from 'electron';
 import path from 'path';
-import { ParticipantService } from './service/participantService';
-import { Participant } from '../common/participant';
+import { ParticipantService } from './service/participantService'
+import { Participant } from '@/common/participant';
 
 // Déclaration de la fenêtre principale
 // nul indique que la fenêtre n'est pas encore créée
@@ -33,10 +33,14 @@ app.on('ready', () => {
     mainWindow.loadURL('http://localhost:5173'); // URL de l'application Vue.js
 });
 
-ipcMain.on('open-accueil', () => {
-  const accueilWindow = new BrowserWindow({
+ipcMain.on('ajouter-participant', () => {
+  const ajoutWindow = new BrowserWindow({
     width: 550,
-    height: 500,
+    height: 700,
+    title: "Nouveau participant",
+    // fenêtre modale
+    modal: true,
+    parent: mainWindow || undefined,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
@@ -46,18 +50,61 @@ ipcMain.on('open-accueil', () => {
 
   // Ceci est une fonction qui attend que la fenêtre soit prête à être affichée avant de l'afficher
   // Pour qu'il n'y ait pas d'écran blanc avant le chargement complet de la vue
-  accueilWindow?.once('ready-to-show', () => {
-    accueilWindow?.show()
+  ajoutWindow?.once('ready-to-show', () => {
+    ajoutWindow?.show()
   });
 
   // Ceci est une fonction qui attend que le contenu soit complètement chargé avant d'afficher la fenêtre
   // Pour qu'il n'y ait pas d'écran blanc avant le chargement complet de la vue
-  accueilWindow?.webContents.on('did-finish-load', () => {
-    accueilWindow?.show()
+  ajoutWindow?.webContents.on('did-finish-load', () => {
+    ajoutWindow?.show()
   });
 
   // Charge la route Vue dans la nouvelle fenêtre
-  accueilWindow.loadURL('http://localhost:5173/#/accueil')
+  ajoutWindow.loadURL('http://localhost:5173/#/ajouterParticipant')
+});
+
+let selectedParticipantForModif: Participant | null = null;
+
+
+ipcMain.on('modifier-participant', (event, participant: Participant) => {
+
+  //stocker le participant selectionne pour le passer a la fenetre de modification
+  selectedParticipantForModif = participant;
+
+  const modifWindow = new BrowserWindow({
+    width: 550,
+    height: 700,
+    title: "Modifier participant",
+    // fenêtre modale
+    modal: true,
+    parent: mainWindow || undefined,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/preload.js'),
+      contextIsolation: true,
+    },
+  });
+
+  // Ceci est une fonction qui attend que la fenêtre soit prête à être affichée avant de l'afficher
+  // Pour qu'il n'y ait pas d'écran blanc avant le chargement complet de la vue
+  modifWindow?.once('ready-to-show', () => {
+    modifWindow?.show()
+
+    // Envoyer le participant sélectionné à la fenêtre de modification une fois qu'elle est prête
+    if(modifWindow && selectedParticipantForModif) {
+      modifWindow.webContents.send('selected-participant', selectedParticipantForModif)
+    }
+  });
+
+  // Ceci est une fonction qui attend que le contenu soit complètement chargé avant d'afficher la fenêtre
+  // Pour qu'il n'y ait pas d'écran blanc avant le chargement complet de la vue
+  modifWindow?.webContents.on('did-finish-load', () => {
+    modifWindow?.show()
+  });
+
+  // Charge la route Vue dans la nouvelle fenêtre
+  modifWindow.loadURL('http://localhost:5173/#/modifierParticipant')
 });
 
 // Communication entre le processus principal et le processus de rendu
@@ -68,28 +115,46 @@ ipcMain.on('message-channel', (event, arg)=> {
 
 const participantService = new ParticipantService();
 
-
 ipcMain.handle('Canal-ChargerParticipants', async () => {
-    try {
-        const data = await participantService.chargerParticipants();
-        return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
+  try {
+    const data = await participantService.chargerParticipants()
+
+    return { success: true, data}
+  }catch(error: any)
+  {
+    return {success: false, error: error.messge}
+  }
 });
 
-ipcMain.handle('Canal-AjouterParticipant', async (_event, participant: Participant) => {
-    try {
-        await participantService.ajouterParticipant(participant);
-        if (mainWindow) {
-            mainWindow.webContents.send('participant-added', participant);
-          }
-          return { success: true, data: participant };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+ipcMain.handle('Canal-AjouterParticipant', async (_event, participant: Participant) =>{
+  try{
+    await participantService.ajouterParticipant(participant)
+
+    if(mainWindow){
+      mainWindow.webContents.send('participant-added', participant)
     }
+
+    return { success: true, data: participant}
+  }catch(error: any) {
+    return { success: false, error: error.message }
+  }
 });
 
-ipcMain.handle('show-message-box', async (event, options) => {
-    return dialog.showMessageBox(options);
+ipcMain.handle("showMessageBox", async (event, options) => {
+  return dialog.showMessageBox(options);
 });
+
+
+ipcMain.handle('Canal-SupprimerParticipant', async (_event, matricule) => {
+  try {
+    await participantService.supprimerParticipant(matricule)
+
+    return { success: true }
+  }catch(error: any)
+  {
+    return { success: false, error:error.message}
+  }
+});
+
+
+

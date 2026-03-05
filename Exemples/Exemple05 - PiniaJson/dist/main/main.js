@@ -37,6 +37,7 @@ class ParticipantService {
     const dataDir = path.join(electron.app.getAppPath(), "data");
     this.participantsFilePath = path.join(dataDir, "participants.json");
   }
+  // Méthode privée pour lire le fichier JSON
   async lireParticipants() {
     try {
       const data = await fs.promises.readFile(this.participantsFilePath, "utf-8");
@@ -44,13 +45,13 @@ class ParticipantService {
       return participants.map((p) => new Participant(p));
     } catch (error) {
       if (error.code === "ENOENT") {
-        console.warn(`Fichier ${this.participantsFilePath} non trouvé. Création d'une liste vide.`);
+        console.warn(`Fichier ${this.participantsFilePath} introuvable, retour d'un tableau vide`);
         return [];
       }
       throw error;
     }
   }
-  // Méthode pour charger les participants, utilisée par le renderer process via IPC
+  // Méthode pour charger les participants
   async chargerParticipants() {
     return await this.lireParticipants();
   }
@@ -59,15 +60,26 @@ class ParticipantService {
       return await this.chargerParticipants();
     });
   }
-  // Méthode pour ajouter un nouveau participant
+  // Ajouter un nouveau participant
   async ajouterParticipant(participant) {
     const participants = await this.lireParticipants();
     participants.push(participant);
     await this.ecrireParticipants(participants);
   }
   async ecrireParticipants(participants) {
-    const data = JSON.stringify(participants, null, 2);
-    await fs.promises.writeFile(this.participantsFilePath, data, "utf-8");
+    const jsonData = JSON.stringify(participants, null, 2);
+    await fs.promises.writeFile(this.participantsFilePath, jsonData, "utf-8");
+  }
+  // Supprimer un participant sélectionné dans le v-data-table
+  async supprimerParticipant(matricule) {
+    const participants = await this.lireParticipants();
+    const index = participants.findIndex((p) => p.matricule === matricule);
+    if (index !== -1) {
+      participants.splice(index, 1);
+      await this.ecrireParticipants(participants);
+    } else {
+      throw new Error(`Participant avec matricule ${matricule} introuvable`);
+    }
   }
 }
 let mainWindow = null;
@@ -93,23 +105,54 @@ electron.app.on("ready", () => {
   });
   mainWindow.loadURL("http://localhost:5173");
 });
-electron.ipcMain.on("open-accueil", () => {
-  const accueilWindow = new electron.BrowserWindow({
+electron.ipcMain.on("ajouter-participant", () => {
+  const ajoutWindow = new electron.BrowserWindow({
     width: 550,
-    height: 500,
+    height: 700,
+    title: "Nouveau participant",
+    // fenêtre modale
+    modal: true,
+    parent: mainWindow || void 0,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "../preload/preload.js"),
       contextIsolation: true
     }
   });
-  accueilWindow?.once("ready-to-show", () => {
-    accueilWindow?.show();
+  ajoutWindow?.once("ready-to-show", () => {
+    ajoutWindow?.show();
   });
-  accueilWindow?.webContents.on("did-finish-load", () => {
-    accueilWindow?.show();
+  ajoutWindow?.webContents.on("did-finish-load", () => {
+    ajoutWindow?.show();
   });
-  accueilWindow.loadURL("http://localhost:5173/#/accueil");
+  ajoutWindow.loadURL("http://localhost:5173/#/ajouterParticipant");
+});
+let selectedParticipantForModif = null;
+electron.ipcMain.on("modifier-participant", (event, participant) => {
+  selectedParticipantForModif = participant;
+  const modifWindow = new electron.BrowserWindow({
+    width: 550,
+    height: 700,
+    title: "Modifier participant",
+    // fenêtre modale
+    modal: true,
+    parent: mainWindow || void 0,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/preload.js"),
+      contextIsolation: true
+    }
+  });
+  modifWindow?.once("ready-to-show", () => {
+    modifWindow?.show();
+    if (modifWindow && selectedParticipantForModif) {
+      modifWindow.webContents.send("selected-participant", selectedParticipantForModif);
+    }
+  });
+  modifWindow?.webContents.on("did-finish-load", () => {
+    modifWindow?.show();
+  });
+  modifWindow.loadURL("http://localhost:5173/#/modifierParticipant");
 });
 electron.ipcMain.on("message-channel", (event, arg) => {
   console.log("Message reçu :", arg);
@@ -121,7 +164,7 @@ electron.ipcMain.handle("Canal-ChargerParticipants", async () => {
     const data = await participantService.chargerParticipants();
     return { success: true, data };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.messge };
   }
 });
 electron.ipcMain.handle("Canal-AjouterParticipant", async (_event, participant) => {
@@ -135,6 +178,14 @@ electron.ipcMain.handle("Canal-AjouterParticipant", async (_event, participant) 
     return { success: false, error: error.message };
   }
 });
-electron.ipcMain.handle("show-message-box", async (event, options) => {
+electron.ipcMain.handle("showMessageBox", async (event, options) => {
   return electron.dialog.showMessageBox(options);
+});
+electron.ipcMain.handle("Canal-SupprimerParticipant", async (_event, matricule) => {
+  try {
+    await participantService.supprimerParticipant(matricule);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 });
