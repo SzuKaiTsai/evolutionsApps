@@ -20,4 +20,10 @@ contextBridge.exposeInMainWorld('api', {
     showMessageBox: (options: any) => ipcRenderer.invoke("showMessageBox", options),
 
     supprimerParticipant: (matricule: number): Promise<ApiResponse> => ipcRenderer.invoke('Canal-SupprimerParticipant', matricule),
+    
+    once: (channel:string, callback: (event: any, data: any) => void) => {
+        ipcRenderer.once(channel, callback);
+    },
+    
+    modifierParticipant: (participant: Participant): Promise<ApiResponse> => ipcRenderer.invoke('Canal-ModifierParticipant', participant)
 });

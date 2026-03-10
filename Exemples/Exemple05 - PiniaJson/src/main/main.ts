@@ -65,14 +65,14 @@ ipcMain.on('ajouter-participant', () => {
 });
 
 let selectedParticipantForModif: Participant | null = null;
-
+let modifWindow: BrowserWindow | null = null;
 
 ipcMain.on('modifier-participant', (event, participant: Participant) => {
 
   //stocker le participant selectionne pour le passer a la fenetre de modification
   selectedParticipantForModif = participant;
 
-  const modifWindow = new BrowserWindow({
+  modifWindow = new BrowserWindow({
     width: 550,
     height: 700,
     title: "Modifier participant",
@@ -155,6 +155,22 @@ ipcMain.handle('Canal-SupprimerParticipant', async (_event, matricule) => {
     return { success: false, error:error.message}
   }
 });
+
+ipcMain.handle('Canal-ModifierParticipant', async (_event, updatedParticipant: Participant) => {
+  try {
+    await participantService.modifierParticipant(updatedParticipant)
+    // Notifier la fenêtre principale qu'un participant a été modifié
+    if (mainWindow) {
+      // Convertir en plain object pour éviter les erreurs de sérialisation
+      const plainParticipant = JSON.parse(JSON.stringify(updatedParticipant))
+      mainWindow.webContents.send('participant-modified', plainParticipant)
+    }
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+})
+
 
 
 

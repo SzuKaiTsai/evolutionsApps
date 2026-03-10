@@ -39,10 +39,14 @@ declare global {
 
             chargerParticipants: () => Promise<ApiResponse & { data: Participant[]}>;
 
-            ajouterParticipant: (participant: Participant) => Promise<ApiResponse>
-            showMessageBox: (options: any) => Promise<any>
+            ajouterParticipant: (participant: Participant) => Promise<ApiResponse>;
+            showMessageBox: (options: any) => Promise<any>;
 
-            supprimerParticipant: (matricule: number) => Promise<ApiResponse>
+            supprimerParticipant: (matricule: number) => Promise<ApiResponse>;
+
+            once: (channel: string, callback: (event: any, data: any) => void) => void;
+
+            modifierParticipant: (participant: Participant) => Promise<ApiResponse>;
         };
     }
 }

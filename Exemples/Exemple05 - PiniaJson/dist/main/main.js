@@ -81,6 +81,17 @@ class ParticipantService {
       throw new Error(`Participant avec matricule ${matricule} introuvable`);
     }
   }
+  // Modifier un participant
+  async modifierParticipant(updated) {
+    const participants = await this.lireParticipants();
+    const index = participants.findIndex((p) => p.matricule === updated.matricule);
+    if (index !== -1) {
+      participants[index] = { ...participants[index], ...updated };
+      await this.ecrireParticipants(participants);
+    } else {
+      throw new Error(`Participant avec matricule ${updated.matricule} introuvable`);
+    }
+  }
 }
 let mainWindow = null;
 electron.app.on("ready", () => {
@@ -128,9 +139,10 @@ electron.ipcMain.on("ajouter-participant", () => {
   ajoutWindow.loadURL("http://localhost:5173/#/ajouterParticipant");
 });
 let selectedParticipantForModif = null;
+let modifWindow = null;
 electron.ipcMain.on("modifier-participant", (event, participant) => {
   selectedParticipantForModif = participant;
-  const modifWindow = new electron.BrowserWindow({
+  modifWindow = new electron.BrowserWindow({
     width: 550,
     height: 700,
     title: "Modifier participant",
@@ -184,6 +196,18 @@ electron.ipcMain.handle("showMessageBox", async (event, options) => {
 electron.ipcMain.handle("Canal-SupprimerParticipant", async (_event, matricule) => {
   try {
     await participantService.supprimerParticipant(matricule);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+electron.ipcMain.handle("Canal-ModifierParticipant", async (_event, updatedParticipant) => {
+  try {
+    await participantService.modifierParticipant(updatedParticipant);
+    if (mainWindow) {
+      const plainParticipant = JSON.parse(JSON.stringify(updatedParticipant));
+      mainWindow.webContents.send("participant-modified", plainParticipant);
+    }
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

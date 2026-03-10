@@ -68,4 +68,19 @@ export class ParticipantService {
             throw new Error(`Participant avec matricule ${matricule} introuvable`);
         }
     }
+
+    // Modifier un participant
+  public async modifierParticipant(updated: Partial<Participant>): Promise<void> {
+    
+      const participants = await this.lireParticipants();
+
+      const index = participants.findIndex(p => p.matricule === updated.matricule)
+    if (index !== -1) {
+        participants[index] = { ...participants[index], ...updated };
+        await this.ecrireParticipants(participants);
+    } else {
+      throw new Error(`Participant avec matricule ${updated.matricule} introuvable`)
+    }
+  }
+
 }

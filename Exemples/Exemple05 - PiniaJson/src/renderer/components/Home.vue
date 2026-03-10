@@ -13,6 +13,7 @@
        <v-list>
          <v-list-item title="Ajouter" prepend-icon="mdi-plus" @click="ouvrirAjouterParticipant"></v-list-item>
          <v-list-item title="Supprimer" prepend-icon="mdi-delete" @click="supprimerParticipant"></v-list-item>
+         <v-list-item title="Modifier" prepend-icon="mdi-pencil" @click="ouvrirModifierParticipant"></v-list-item>
        </v-list>
     </v-navigation-drawer> 
 
@@ -73,6 +74,23 @@ function ouvrirAjouterParticipant() {
   window.api.send('ajouter-participant', "Ajouter un participant");
 }
 
+function ouvrirModifierParticipant() {
+  if (selectedParticipant.value) {
+    
+    // convertir l'objet participant en une structure simple pour éviter les problèmes de réactivité lors de l'envoi via IPC
+    // parse et stringify permettent de créer une copie sérialisable
+    const participantPlain = JSON.parse(JSON.stringify(selectedParticipant.value))
+    window.api.send('modifier-participant', participantPlain);
+  } else {
+    window.api.showMessageBox({
+      type: "warning",
+      title: "Aucun participant sélectionné",
+      message: "Veuillez sélectionner un participant à modifier dans le tableau.",
+    });
+  }
+}
+
+
 const store = useParticipantStore();
 
 const headers = ref([
@@ -96,6 +114,7 @@ onMounted( async() => {
 function handleRowClick(item: Participant){
   console.log('Ligne sélectionnée: Nom: ', item.nom, ", Prénom: ", item.prenom);
   selectedParticipant.value = item;
+  store.selectParticipant(item);
 }
 
 async function supprimerParticipant(){

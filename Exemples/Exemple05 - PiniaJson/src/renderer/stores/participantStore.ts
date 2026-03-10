@@ -8,6 +8,7 @@ export const useParticipantStore = defineStore('participant', () => {
     const participants = ref<Participant[]>([]);
     const isLoading = ref(false);
     const error = ref<string | null>(null);
+    const selectedParticipant = ref<Participant | null>(null);
     
     // getters
     
@@ -53,6 +54,7 @@ export const useParticipantStore = defineStore('participant', () => {
         participants.value = []
         isLoading.value = false
         error.value = null
+        
     }
 
     // Ajouter un nouveau participant
@@ -91,8 +93,18 @@ export const useParticipantStore = defineStore('participant', () => {
                 console.log('Participant ajouté via IPC: ', participant)
             }
         })
-    }
 
+        window.api.on('participant-modified', (event: any, updatedParticipant: Participant) => {
+            const index = participants.value.findIndex(p => p.matricule === updatedParticipant.matricule)
+
+            if(index !== -1)
+            {
+                participants.value[index] = updatedParticipant
+                console.log('Participant modifié via IPC: ', updatedParticipant)
+            }
+            
+        })
+    }
     // Fonction pour demander la suppression du participant sélectionné dans le v-data-table
     async function supprimerParticipant(matricule: number) {
         isLoading.value = true
@@ -123,6 +135,16 @@ export const useParticipantStore = defineStore('participant', () => {
         }
     }
 
+    function selectParticipant(participant: Participant) {
+        selectedParticipant.value = { ...participant }
+    }
+
+    function clearSelectedParticipant(){
+        selectedParticipant.value = null
+    }
+
+    
+
     return {
         // State
         participants,
@@ -138,7 +160,9 @@ export const useParticipantStore = defineStore('participant', () => {
         resetState,
         ajouterParticipant,
         setupIpcListeners,
-        supprimerParticipant
+        supprimerParticipant,
+        selectParticipant,
+        clearSelectedParticipant
     }
 
 });

@@ -29,14 +29,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const formRef = ref()
 
 import type { Participant } from '../../common/participant'
 
 // Copie locale pour éditer les données
-const ... = ref<Participant>({
+const editedParticipant = ref<Participant>({
   matricule: 0,
   prenom: '',
   nom: '',
@@ -46,10 +46,52 @@ const ... = ref<Participant>({
   isActif: false,
 })
 
-function submitForm() {
-  // Ici vous pouvez ajouter la logique pour modifier le participant
-  console.log('Participant modifié:', editedParticipant.value)
+onMounted(() => {
+  // Écouter l'événement pour recevoir les données du participant à modifier
+  window.api.once('selected-participant', (event: any, participant: Participant) => {
+    if (participant) {
+      editedParticipant.value = { ...participant }
+
+    }
+  })
+})
+
+async function submitForm() {
+  try {
+    const plainParticipant = JSON.parse(JSON.stringify(editedParticipant.value))
+
+    // Appeler l'API pour modifier le participant
+    const result = await window.api.modifierParticipant(plainParticipant)
+    
+    if (result.success) {
+      // Afficher un message de succès
+      await window.api.showMessageBox({
+        type: "info",
+        title: "Modification",
+        message: `Participant ${editedParticipant.value.prenom} ${editedParticipant.value.nom} modifié avec succès.`,
+      });
+      
+      // Fermer la fenêtre après succès
+      window.close()
+    } else {
+      // Afficher un message d'erreur
+      await window.api.showMessageBox({
+        type: "error",
+        title: "Erreur de modification",
+        message: `Erreur lors de la modification: ${result.error}`,
+      });
+    }
+  } catch (error) {
+    console.error('Erreur lors de la modification du participant:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    await window.api.showMessageBox({
+      type: "error",
+      title: "Erreur",
+      message: `Une erreur est survenue: ${errorMessage}`,
+    });
+  }
 }
+
 
 
 </script>
