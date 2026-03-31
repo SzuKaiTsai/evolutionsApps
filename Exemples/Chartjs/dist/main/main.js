@@ -1,0 +1,221 @@
+"use strict";
+const electron = require("electron");
+const path = require("path");
+const fs = require("fs");
+class Participant {
+  matricule;
+  prenom;
+  nom;
+  genre;
+  niveau;
+  email;
+  isActif;
+  //Définition du constructeur avec des valeurs par défaut
+  // data? veut dire que le paramètre est optionnel
+  // Partial<Participant> permet de créer un objet avec les mêmes propriétés que Participant
+  // mais toutes les propriétés sont optionnelles
+  constructor(data) {
+    this.matricule = data?.matricule ?? 0;
+    this.prenom = data?.prenom || "";
+    this.nom = data?.nom || "";
+    this.genre = Object.values(Genre).includes(data?.genre) ? data?.genre : "";
+    this.niveau = Object.values(Niveau).includes(data?.niveau) ? data?.niveau : "";
+    this.email = data?.email?.includes("@") ? data?.email : "";
+    this.isActif = data?.isActif ?? true;
+  }
+}
+var Genre = /* @__PURE__ */ ((Genre2) => {
+  Genre2["M"] = "M";
+  Genre2["F"] = "F";
+  return Genre2;
+})(Genre || {});
+var Niveau = /* @__PURE__ */ ((Niveau2) => {
+  Niveau2["Débutant"] = "Débutant";
+  Niveau2["Intermédiaire"] = "Intermédiaire";
+  Niveau2["Professionnel"] = "Professionnel";
+  return Niveau2;
+})(Niveau || {});
+class ParticipantService {
+  participantsFilePath;
+  constructor() {
+    const dataDir = path.join(electron.app.getAppPath(), "data");
+    this.participantsFilePath = path.join(dataDir, "participants.json");
+  }
+  // Méthode privée pour lire le fichier JSON
+  async lireParticipants() {
+    try {
+      const data = await fs.promises.readFile(this.participantsFilePath, "utf-8");
+      const participants = JSON.parse(data);
+      return participants.map((p) => new Participant(p));
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        console.warn(`Fichier ${this.participantsFilePath} introuvable, retour d'un tableau vide`);
+        return [];
+      }
+      throw error;
+    }
+  }
+  // Récupérer tous les participants
+  async chargerParticipants() {
+    return await this.lireParticipants();
+  }
+  // Enregistrer les canaux IPC dans le processus principal (main) pour permettre 
+  // au renderer (Vue.js + Pinia) de communiquer avec le main (Electron + service + accès fichier + DB) 
+  registerIpcHandlers() {
+    electron.ipcMain.handle("Canal-ChargerParticipants", async () => {
+      return await this.chargerParticipants();
+    });
+  }
+  // Ajout un participant
+  async ajouterParticipant(participant) {
+    const participants = await this.lireParticipants();
+    participants.push(participant);
+    await this.ecrireParticipants(participants);
+  }
+  // Méthode privée pour écrire dans le fichier JSON
+  async ecrireParticipants(participants) {
+    const jsonData = JSON.stringify(participants, null, 2);
+    await fs.promises.writeFile(this.participantsFilePath, jsonData, "utf-8");
+  }
+  // Supprimer un participant
+  async supprimerParticipant(matricule) {
+    const participants = await this.lireParticipants();
+    const index = participants.findIndex((p) => p.matricule === matricule);
+    if (index !== -1) {
+      participants.splice(index, 1);
+      await this.ecrireParticipants(participants);
+    } else {
+      throw new Error(`Participant avec matricule ${matricule} introuvable`);
+    }
+  }
+  // Modifier un participant existant
+  async modifierParticipant(updated) {
+    const participants = await this.lireParticipants();
+    const index = participants.findIndex((p) => p.matricule === updated.matricule);
+    if (index !== -1) {
+      participants[index] = { ...participants[index], ...updated };
+      await this.ecrireParticipants(participants);
+    } else {
+      throw new Error(`Participant avec matricule ${updated.matricule} introuvable`);
+    }
+  }
+}
+let mainWindow = null;
+let selectedParticipantForModif = null;
+electron.app.on("ready", () => {
+  mainWindow = new electron.BrowserWindow({
+    width: 950,
+    height: 760,
+    autoHideMenuBar: true,
+    // Masquer la barre de menu
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/preload.js"),
+      // Utilisation d'un chemin absolu
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  mainWindow?.once("ready-to-show", () => {
+    mainWindow?.show();
+  });
+  mainWindow?.webContents.on("did-finish-load", () => {
+    mainWindow?.show();
+  });
+  mainWindow.loadURL("http://localhost:5173");
+});
+electron.ipcMain.on("ajouter-participant", () => {
+  const ajoutWindow = new electron.BrowserWindow({
+    width: 550,
+    height: 700,
+    title: "Nouveau participant",
+    modal: true,
+    parent: mainWindow || void 0,
+    // Associer la fenêtre modale à la fenêtre principale
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/preload.js"),
+      contextIsolation: true
+    }
+  });
+  ajoutWindow?.once("ready-to-show", () => {
+    ajoutWindow?.show();
+  });
+  ajoutWindow?.webContents.on("did-finish-load", () => {
+    ajoutWindow?.show();
+  });
+  ajoutWindow.loadURL("http://localhost:5173/#/ajouterParticipant");
+});
+electron.ipcMain.on("modifier-participant", (event, participant) => {
+  selectedParticipantForModif = participant;
+  const modifWindow2 = new electron.BrowserWindow({
+    width: 550,
+    height: 700,
+    title: "Modifier un participant",
+    modal: true,
+    parent: mainWindow || void 0,
+    // Associer la fenêtre modale à la fenêtre principale
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/preload.js"),
+      contextIsolation: true
+    }
+  });
+  modifWindow2?.once("ready-to-show", () => {
+    modifWindow2?.show();
+    if (modifWindow2 && selectedParticipantForModif) {
+      modifWindow2.webContents.send("selected-participant", selectedParticipantForModif);
+    }
+  });
+  modifWindow2?.webContents.on("did-finish-load", () => {
+    modifWindow2?.show();
+  });
+  modifWindow2.loadURL("http://localhost:5173/#/modifierParticipant");
+});
+electron.ipcMain.on("message-channel", (event, arg) => {
+  console.log("Message reçu :", arg);
+  event.reply("message-channel", "Réponse du main process");
+});
+const participantService = new ParticipantService();
+electron.ipcMain.handle("Canal-ChargerParticipants", async () => {
+  try {
+    const data = await participantService.chargerParticipants();
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+electron.ipcMain.handle("Canal-AjouterParticipant", async (event, participant) => {
+  try {
+    await participantService.ajouterParticipant(participant);
+    if (mainWindow) {
+      mainWindow.webContents.send("participant-added", participant);
+    }
+    return { success: true, data: participant };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+electron.ipcMain.handle("showMessageBox", async (event, options) => {
+  return electron.dialog.showMessageBox(options);
+});
+electron.ipcMain.handle("Canal-SupprimerParticipant", async (_event, matricule) => {
+  try {
+    await participantService.supprimerParticipant(matricule);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+electron.ipcMain.handle("Canal-ModifierParticipant", async (_event, updatedParticipant) => {
+  try {
+    await participantService.modifierParticipant(updatedParticipant);
+    if (mainWindow) {
+      const plainParticipant = JSON.parse(JSON.stringify(updatedParticipant));
+      mainWindow.webContents.send("participant-modified", plainParticipant);
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
