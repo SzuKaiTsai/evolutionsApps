@@ -108,6 +108,16 @@ export const useParticipantStore = defineStore('participant', () => {
             }
         })
 
+        // Écouter quand un participant est supprimé depuis la fenêtre de suppression
+        window.api.on('participant-deleted', (event: any, matricule: number) => {
+            // Supprimer le participant de la liste locale
+            const index = participants.value.findIndex(p => p.matricule === matricule)
+            if (index !== -1) {
+                participants.value.splice(index, 1)
+                console.log('Participant supprimé via IPC, matricule:', matricule)
+            }
+        })
+
     }
 
         // Supprimer un participant

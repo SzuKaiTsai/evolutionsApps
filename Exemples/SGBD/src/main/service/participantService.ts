@@ -21,13 +21,13 @@ export class ParticipantService{
           const query = `SELECT * FROM participant`;
           const rows = await this.db.query(query);
           return rows.map((row: any) => new Participant({
-            matricule: row.matricule,
-            prenom: row.prenom,
-            nom: row.nom,
-            genre: row.genre,
-            niveau: row.niveau,
-            email: row.email,
-            isActif: row.isActif === 1 ? true : false
+            matricule: row.Matricule,
+            prenom: row.Prenom,
+            nom: row.Nom,
+            genre: row.Genre,
+            niveau: row.Niveau,
+            email: row.Email,
+            isActif: row.IsActif === 1 ? true : false
           }));
           
         } catch (error: any) {

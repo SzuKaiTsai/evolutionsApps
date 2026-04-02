@@ -10,7 +10,23 @@ let mainWindow: BrowserWindow | null = null;
 let modifWindow: BrowserWindow | null = null;
 let selectedParticipantForModif: Participant | null = null;
 
-app.on('ready', () => {
+let participantService: ParticipantService;
+
+
+
+app.on('ready', async () => {
+
+  participantService = new ParticipantService()
+  try{
+    await participantService.init() // Initialiser le service avant de créer la fenêtre
+    console.log('Service des participants initialisé avec la BD')
+  } catch (error: any) {
+    console.error('Erreur lors de l\'initialisation du service :', error)
+    dialog.showErrorBox('Erreur d\'initialisation', 'Une erreur est survenue lors de l\'initialisation du service de participants. Veuillez vérifier la console pour plus de détails.')
+    app.quit() // Quitter l'application si le service ne peut pas être initialisé
+    return
+  }
+
     mainWindow = new BrowserWindow({
         width: 950,
         height: 760,
@@ -34,6 +50,13 @@ app.on('ready', () => {
   });
 
     mainWindow.loadURL('http://localhost:5173'); // URL de l'application Vue.js
+});
+
+app.on('before-quit', async ()=> {
+  if (participantService) {
+    await participantService.close() // Fermer la connexion à la BD avant de quitter l'application
+    console.log('Connexion à la BD fermée')
+  }
 });
 
 ipcMain.on('ajouter-participant', () => {
@@ -110,7 +133,7 @@ ipcMain.on('message-channel', (event, arg)=> {
 });
 
 
-const participantService = new ParticipantService()
+
 
 ipcMain.handle('Canal-ChargerParticipants', async () => {
   try

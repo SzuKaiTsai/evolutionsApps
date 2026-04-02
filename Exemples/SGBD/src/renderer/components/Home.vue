@@ -108,6 +108,7 @@ import type { Participant } from '../../common/participant'
 // Utiliser les participants du store (reactif)
 const participants = computed(() => store.participants);
 
+
 // async ... await pour attendre que chargerParticipants soit terminé avant de continuer
 onMounted(async () => {
   // Charger les participants depuis le service au montage du composant
