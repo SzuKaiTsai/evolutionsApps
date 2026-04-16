@@ -1,5 +1,5 @@
 
-class Dessinateur3D {
+export class Dessinateur3D {
 
     // Méthode pour dessiner une sphère 
     public DessinerSphere(x: number, y: number, z: number, rayon: number): void {
@@ -13,7 +13,7 @@ class Dessinateur3D {
     }
 }
 
-class Vector3D {
+export class Vector3D {
     public X: number;
     public Y: number;
     public Z: number;
@@ -33,7 +33,7 @@ abstract class Forme {
     }
 }
 
-class Sphere extends Forme {
+export class Sphere extends Forme {
     public Rayon: number;
 
     constructor(emplacement: Vector3D, rayon: number) {
@@ -45,7 +45,7 @@ class Sphere extends Forme {
     }
 }
 
-class Cube extends Forme {
+export class Cube extends Forme {
     public LongueurArete: number;
 
     constructor(emplacement: Vector3D, longueurArete: number) {
