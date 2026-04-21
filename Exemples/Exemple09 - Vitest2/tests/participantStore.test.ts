@@ -162,4 +162,26 @@ describe('participantStore', () => {
         })
     })
 
+    describe('modif du participant', () => {
+        it('devrait appeler l\'API avec le participant modifié et verifier que le mock a ete appele', async () => {
+            const store = useParticipantStore()
+            const participantModifie = new Participant({
+                matricule: 1,
+                prenom: 'Alice',
+                nom: 'Tremblay-Dupont',
+                genre: 'F' as Genre,
+                niveau: 'Intermédiaire' as Niveau,
+                email: 'tremblayd@example.com', 
+                isActif: true
+            });
+            
+            (window.api.modifierParticipant as any).mockResolvedValue({ success: true, message: 'Participant modifié avec succès' })
+
+            const result = await store.modifierParticipant(participantModifie)
+
+            expect(result).toEqual({ success: true }) 
+            expect(window.api.modifierParticipant).toHaveBeenCalledTimes(1) 
+            expect(window.api.modifierParticipant).toHaveBeenCalledWith(participantModifie)
+        })
+    })
 })

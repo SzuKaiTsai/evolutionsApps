@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Vector3D, Sphere } from '../src/index.ts';
+import { Vector3D, Sphere, Cube } from '../src/index.ts';
 
 // le nom du describe doit correspondre au nom de la class qu'il test
 describe('Vector3D', () => {
@@ -24,17 +24,34 @@ describe('Sphere', () => {
 
     // initialiser les variables avant chaque test
     beforeEach(() => {
-        v = new Vector3D(1, 2, 3);
+        v = new Vector3D(10, 20, 30);
         sp = new Sphere(v, 5);
     });
 
     it("doit initialiser les propriétés Emplacement", () => {
-        // const emplacement = new Vector3D(1, 2, 3);
-        // const sphere = new Sphere(emplacement, 5);
-        // expect(sphere.Emplacement).toBe(emplacement);
-        // expect(sphere.Rayon).toBe(5);
+        // on n'utilise pas les variables v et sp en d'en haut.
+        const emplacement = new Vector3D(10, 20, 30);
+        const sphere = new Sphere(emplacement, 5);
+        expect(sphere.Emplacement).toBe(emplacement);
+        expect(sphere.Rayon).toBe(5);
 
-        v.X = 10;
-        expect(sp.Emplacement.X).toBe(10);
+        // v.X = 10;
+        // expect(sp.Emplacement.X).toBe(10);
+    });
+})
+
+describe('Cube', () => {
+    let v: Vector3D;
+    let cube: Cube;
+    beforeEach(() => {
+        v = new Vector3D(5, 5, 5);
+        cube = new Cube(v, 7);
+    });
+
+    it("doit initialiser les propriétés Emplacement", () => {
+        const emplacement = new Vector3D(5, 5, 5);
+        const cube = new Cube(emplacement, 7);
+        expect(cube.Emplacement).toBe(emplacement);
+        expect(cube.LongueurArete).toBe(7);
     });
 })

@@ -158,6 +158,32 @@ export const useParticipantStore = defineStore('participant', () => {
     }
 
 
+    async function modifierParticipant(updates: Participant) {
+        isLoading.value = true
+        error.value = null
+ 
+        try {
+        const result = await window.api.modifierParticipant(updates)
+       
+        if (result.success) {
+            // Mettre à jour localement
+            const index = participants.value.findIndex(p => p.matricule === updates.matricule)
+            if (index !== -1) {
+            participants.value[index] = { ...participants.value[index], ...updates }
+            }
+            return { success: true }
+        } else {
+            error.value = result.error || 'Erreur lors de la modification'
+            return { success: false, error: error.value }
+        }
+        } catch (e: any) {
+        error.value = e.message
+        return { success: false, error: e.message }
+        } finally {
+        isLoading.value = false
+        }
+    }
+ 
 
     // Return (exposition publique)
     // Exposer les éléments du store aux composants Vue qui l'utilisent pour accéder aux états, getters et actions
@@ -175,7 +201,7 @@ export const useParticipantStore = defineStore('participant', () => {
         totalParticipants,
         // Actions
         chargerParticipants,
-        
+        modifierParticipant,
         ajouterParticipant,
         setupIpcListeners,
 
