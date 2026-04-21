@@ -114,8 +114,52 @@ describe('participantStore', () => {
         (window.api.ajouterParticipant as any).mockResolvedValue({ success: true })
 
         // Appel de la méthode ajouterParticipant du store
+        await useParticipantStore().ajouterParticipant(participant)
+
 
         // Expect
+        expect(window.api.ajouterParticipant).toHaveBeenCalledWith(participant) // Vérifie que la méthode a été appelée avec le participant
+    })
+
+
+    describe('suppression de participant', () => {
+        it('devrait appeler l\'API avec le bon id et verifier que le mock a ete appele', async () => {
+            const store = useParticipantStore()
+            const matriculeASupprimer = 2;
+
+            // Configurer le mock pour retourner un succès
+            (window.api.supprimerParticipant as any).mockResolvedValue({ success: true, message: 'Participant supprimé avec succès' })
+            
+            // act agir
+            const result = await store.supprimerParticipant(matriculeASupprimer)
+
+            // assert
+        
+            expect(result).toEqual({ success: true }) // Vérifie que le résultat est celui attendu
+
+            expect(window.api.supprimerParticipant).toHaveBeenCalledTimes(1) // Vérifie que la méthode a été appelée une fois
+
+            expect(window.api.supprimerParticipant).toHaveBeenCalledWith(matriculeASupprimer) // Vérifie que la méthode a été appelée avec le bon id
+        })
+
+        it('devrait gerer les erreurs lors de la suppression avec mock', async () => {
+
+            //arrange prep du test
+            const store = useParticipantStore()
+            const matriculeASupprimer = 999; // Id qui n'existe pas
+
+            // Configurer le mock pour retourner une erreur
+            (window.api.supprimerParticipant as any).mockResolvedValue({ success: false, error: 'Participant non trouvé' })
+            // act agir
+            const result = await store.supprimerParticipant(matriculeASupprimer)
+            // assert
+            expect(result.success).toBe(false)
+            expect(result.error).toBe('Participant non trouvé')
+            expect(window.api.supprimerParticipant).toHaveBeenCalledTimes(1) // Vérifie que la méthode a été appelée une fois
+            expect(window.api.supprimerParticipant).toHaveBeenCalledWith(matriculeASupprimer) // Vérifie que la méthode a été appelée avec le bon id
+
+
+        })
     })
 
 })
